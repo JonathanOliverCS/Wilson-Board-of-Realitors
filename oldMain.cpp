@@ -46,6 +46,9 @@ int main() {
     cout << "Press 1 to add a person:" << endl;
     cout << "Press 2 to edit someone:" << endl;
     cout << "Press 3 to get information:" << endl;
+    cout << "Press 4 to remove someone:" << endl;
+    cout << "Press 5 to save and quit:" << endl;
+
 
     while (input != 0) {
         cin >> input;
