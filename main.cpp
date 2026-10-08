@@ -1,337 +1,270 @@
 #include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <string>
 
 using namespace std;
 
 
-// =============================
-// ADD A PERSON
-// =============================
+// How many characters each field gets
+const int NAME_SIZE = 30;
+const int ADDRESS_SIZE = 50;
+const int AGE_SIZE = 3;
+const int ID_SIZE = 10;
 
-void AddName()
-{
+
+// Total size of one person
+const int RECORD_SIZE = NAME_SIZE + ADDRESS_SIZE + AGE_SIZE + ID_SIZE;
+
+// Add a person
+void AddName() {
+
+    string first;
+    string last;
+    string address;
+
+    int age;
+    int id;
+
+
+    cout << "First name: ";
+    cin >> first;
+
+    cout << "Last name: ";
+    cin >> last;
+
+    cin.ignore();
+
+    cout << "Address: ";
+    getline(cin, address);
+
+    cout << "Age: ";
+    cin >> age;
+
+    cout << "ID: ";
+    cin >> id;
+
+
+    string name = first + " " + last;
+
+
+    // Open at the end of the file
     ofstream file("people.txt", ios::app);
 
-    if (!file)
-    {
-        cout << "Error opening file.\n";
+    if (!file) {
+        cout << "Could not open file." << endl;
         return;
     }
 
-    string name;
-    int debt;
-    int houseNetWorth;
-    string notes;
 
-    cin.ignore();
+    // Make sure each field has exactly the correct size
 
-    cout << "Enter name: ";
-    getline(cin, name);
+    file << left << setw(NAME_SIZE) << name.substr(0, NAME_SIZE);
 
-    cout << "Enter debt: ";
-    cin >> debt;
+    file << left << setw(ADDRESS_SIZE) << address.substr(0, ADDRESS_SIZE);
 
-    cout << "Enter house net worth: ";
-    cin >> houseNetWorth;
+    file << right << setw(AGE_SIZE) << age;
 
-    cin.ignore();
+    file << left << setw(ID_SIZE) << id;
 
-    cout << "Enter notes: ";
-    getline(cin, notes);
 
-    // Save the person
-    file << name << endl;
-    file << debt << endl;
-    file << houseNetWorth << endl;
-    file << notes << endl;
+    file << endl;
 
     file.close();
 
-    cout << "Person added.\n";
+    cout << endl;
+    cout << "Person added!" << endl;
 }
 
 
-// =============================
-// EDIT A PERSON
-// =============================
-
-void editFile()
-{
-    string searchName;
-
-    cin.ignore();
-
-    cout << "Enter the name you want to edit: ";
-    getline(cin, searchName);
+// Print one person
+void printPerson(int recordNumber) {
 
     ifstream file("people.txt");
 
-    if (!file)
-    {
-        cout << "Error opening file.\n";
+    if (!file) {
+        cout << "Could not open file.\n";
         return;
     }
 
-    // Temporary file for the edited information
-    ofstream temp("temp.txt");
 
-    string name;
-    string debt;
-    string houseNetWorth;
-    string notes;
+    // Move to the beginning of the requested record
+    file.seekg(recordNumber * (RECORD_SIZE + 1));
 
-    bool found = false;
 
-    while (getline(file, name))
-    {
-        getline(file, debt);
-        getline(file, houseNetWorth);
-        getline(file, notes);
+    char name[NAME_SIZE + 1];
+    char address[ADDRESS_SIZE + 1];
+    char age[AGE_SIZE + 1];
+    char id[ID_SIZE + 1];
 
-        // Check if this is the person we want
-        if (name == searchName)
-        {
-            found = true;
 
-            cout << "\nPerson found:\n";
-            cout << "1. Name: " << name << endl;
-            cout << "2. Debt: " << debt << endl;
-            cout << "3. House Net Worth: " << houseNetWorth << endl;
-            cout << "4. Notes: " << notes << endl;
+    file.read(name, NAME_SIZE);
+    file.read(address, ADDRESS_SIZE);
+    file.read(age, AGE_SIZE);
+    file.read(id, ID_SIZE);
 
-            int input2;
 
-            cout << "\nWhich line do you want to edit? ";
-            cin >> input2;
+    name[NAME_SIZE] = '\0';
+    address[ADDRESS_SIZE] = '\0';
+    age[AGE_SIZE] = '\0';
+    id[ID_SIZE] = '\0';
 
-            switch (input2)
-            {
-                case 1:
-                    cout << "Enter new name: ";
-                    cin.ignore();
-                    getline(cin, name);
-                    break;
+    cout << endl;
+    cout << "--------------------" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Address: " << address << endl;
+    cout << "Age: " << age << endl;
+    cout << "ID: " << id << endl;
+    cout << "--------------------" << endl;
 
-                case 2:
-                    cout << "Enter new debt: ";
-                    cin >> debt;
-                    break;
-
-                case 3:
-                    cout << "Enter new house net worth: ";
-                    cin >> houseNetWorth;
-                    break;
-
-                case 4:
-                    cout << "Enter new notes: ";
-                    cin.ignore();
-                    getline(cin, notes);
-                    break;
-
-                default:
-                    cout << "Invalid choice.\n";
-                    file.close();
-                    temp.close();
-                    return;
-            }
-        }
-
-        // Write the person, edited or not, to temp.txt
-        temp << name << endl;
-        temp << debt << endl;
-        temp << houseNetWorth << endl;
-        temp << notes << endl;
-    }
 
     file.close();
-    temp.close();
-
-    if (!found)
-    {
-        cout << "Person not found.\n";
-        remove("temp.txt");
-        return;
-    }
-
-    // Replace the old file with the new one
-    remove("people.txt");
-    rename("temp.txt", "people.txt");
-
-    cout << "Person successfully edited.\n";
 }
 
 
-// =============================
-// SEARCH / PRINT INFORMATION
-// =============================
+// Edit a person's information
+void editFile() {
 
-void printInfo()
-{
-    int input2;
+    int recordNumber;
+
+    cout << "Enter person number: ";
+    cin >> recordNumber;
+
+
+    // Convert from person #1 to record 0
+    recordNumber--;
+
+
+    fstream file("people.txt", ios::in | ios::out);
+
+    if (!file) {
+        cout << "Could not open file.\n";
+        return;
+    }
+
+
+    // Find the beginning of the person's record
+    file.seekg(recordNumber * (RECORD_SIZE + 1));
+
+
+    char name[NAME_SIZE + 1];
+    char address[ADDRESS_SIZE + 1];
+    char age[AGE_SIZE + 1];
+    char id[ID_SIZE + 1];
+
+
+    file.read(name, NAME_SIZE);
+    file.read(address, ADDRESS_SIZE);
+    file.read(age, AGE_SIZE);
+    file.read(id, ID_SIZE);
+
+
+    name[NAME_SIZE] = '\0';
+    address[ADDRESS_SIZE] = '\0';
+    age[AGE_SIZE] = '\0';
+    id[ID_SIZE] = '\0';
 
     cout << endl;
-    cout << "====================" << endl;
-    cout << "1. Search for a person" << endl;
-    cout << "2. Print a person by location" << endl;
-    cout << "3. Print all names" << endl;
-    cout << "Enter choice: ";
+    cout << "Person found:" << endl;
+    cout << "Name: " << name << endl;
+    cout << "Address: " << address << endl;
+    cout << "Age: " << age << endl;
+    cout << "ID: " << id << endl;
 
-    cin >> input2;
 
-    switch (input2)
-    {
-        // -------------------------
-        // SEARCH BY NAME
-        // -------------------------
+    int choice;
+
+
+    cout << endl;
+    cout << "What do you want to edit?" << endl;
+    cout << "1. Name" << endl;
+    cout << "2. Address" << endl;
+    cout << "3. Age" << endl;
+    cout << "4. ID" << endl;
+    cout << "Choice: ";
+
+    cin >> choice;
+
+
+    // Calculate where this record starts
+    int recordStart =
+        recordNumber * (RECORD_SIZE + 1);
+
+
+    switch (choice) {
 
         case 1:
         {
-            string searchName;
+            string newName;
 
             cin.ignore();
 
-            cout << "Enter the name you want information about: ";
-            getline(cin, searchName);
+            cout << "New name: ";
+            getline(cin, newName);
 
-            ifstream file("people.txt");
+            // Go to the name section
+            file.seekp(recordStart);
 
-            if (!file)
-            {
-                cout << "Error opening file.\n";
-                return;
-            }
-
-            string name;
-            string debt;
-            string houseNetWorth;
-            string notes;
-
-            bool found = false;
-
-            while (getline(file, name))
-            {
-                getline(file, debt);
-                getline(file, houseNetWorth);
-                getline(file, notes);
-
-                if (name == searchName)
-                {
-                    cout << "\nName: " << name << endl;
-                    cout << "Debt: " << debt << endl;
-                    cout << "House Net Worth: "
-                         << houseNetWorth << endl;
-                    cout << "Notes: " << notes << endl;
-
-                    found = true;
-                    break;
-                }
-            }
-
-            file.close();
-
-            if (!found)
-            {
-                cout << "Person not found." << endl;
-            }
+            file << left << setw(NAME_SIZE)
+                 << newName.substr(0, NAME_SIZE);
 
             break;
         }
 
-
-        // -------------------------
-        // PRINT PERSON BY LOCATION
-        // -------------------------
 
         case 2:
         {
-            int location;
+            string newAddress;
 
-            cout << "Enter person number: ";
-            cin >> location;
+            cin.ignore();
 
-            ifstream file("people.txt");
+            cout << "New address: ";
+            getline(cin, newAddress);
 
-            if (!file)
-            {
-                cout << "Error opening file.\n";
-                return;
-            }
+            // Name comes first, so skip NAME_SIZE
+            file.seekp(recordStart + NAME_SIZE);
 
-            string name;
-            string debt;
-            string houseNetWorth;
-            string notes;
-
-            int currentPerson = 1;
-            bool found = false;
-
-            while (getline(file, name))
-            {
-                getline(file, debt);
-                getline(file, houseNetWorth);
-                getline(file, notes);
-
-                if (currentPerson == location)
-                {
-                    cout << "\nName: " << name << endl;
-                    cout << "Debt: " << debt << endl;
-                    cout << "House Net Worth: " << houseNetWorth << endl;
-                    cout << "Notes: " << notes << endl;
-
-                    found = true;
-                    break;
-                }
-
-                currentPerson++;
-            }
-
-            file.close();
-
-            if (!found)
-            {
-                cout << "Person not found." << endl;
-            }
+            file << left << setw(ADDRESS_SIZE)
+                 << newAddress.substr(0, ADDRESS_SIZE);
 
             break;
         }
 
 
-        // -------------------------
-        // PRINT ALL NAMES
-        // -------------------------
-
         case 3:
         {
-            ifstream file("people.txt");
+            int newAge;
 
-            if (!file)
-            {
-                cout << "Error opening file.\n";
-                return;
-            }
+            cout << "New age: ";
+            cin >> newAge;
 
-            string name;
-            string debt;
-            string houseNetWorth;
-            string notes;
+            // Name + address come first
+            file.seekp(recordStart +
+                       NAME_SIZE +
+                       ADDRESS_SIZE);
 
-            int currentPerson = 1;
+            file << right << setw(AGE_SIZE)
+                 << newAge;
 
-            cout << "\nPeople:\n";
+            break;
+        }
 
-            while (getline(file, name))
-            {
-                getline(file, debt);
-                getline(file, houseNetWorth);
-                getline(file, notes);
 
-                cout << currentPerson << ". " << name << endl;
+        case 4:
+        {
+            int newID;
 
-                currentPerson++;
-            }
+            cout << "New ID: ";
+            cin >> newID;
 
-            file.close();
+            // Skip name, address and age
+            file.seekp(recordStart +
+                       NAME_SIZE +
+                       ADDRESS_SIZE +
+                       AGE_SIZE);
+
+            file << left << setw(ID_SIZE)
+                 << newID;
 
             break;
         }
@@ -339,53 +272,126 @@ void printInfo()
 
         default:
             cout << "Invalid choice.\n";
+            file.close();
+            return;
     }
+
+
+    file.close();
+
+    cout << "\nPerson updated!\n";
 }
 
 
-// =============================
-// MAIN
-// =============================
+// Print all people
+void printInfo() {
 
-int main()
-{
+    ifstream file("people.txt");
+
+    if (!file) {
+        cout << "Could not open file.\n";
+        return;
+    }
+
+
+    int personNumber = 1;
+
+
+    while (file.peek() != EOF) {
+
+        char name[NAME_SIZE + 1];
+        char address[ADDRESS_SIZE + 1];
+        char age[AGE_SIZE + 1];
+        char id[ID_SIZE + 1];
+
+
+        file.read(name, NAME_SIZE);
+        file.read(address, ADDRESS_SIZE);
+        file.read(age, AGE_SIZE);
+        file.read(id, ID_SIZE);
+
+
+        if (!file) {
+            break;
+        }
+
+
+        name[NAME_SIZE] = '\0';
+        address[ADDRESS_SIZE] = '\0';
+        age[AGE_SIZE] = '\0';
+        id[ID_SIZE] = '\0';
+
+
+        cout << endl;
+        cout << "Person #" << personNumber << endl;
+        cout << "Name: " << name << endl;
+        cout << "Address: " << address << endl;
+        cout << "Age: " << age << endl;
+        cout << "ID: " << id << endl;
+
+
+        file.get(); // skip newline
+
+
+        personNumber++;
+    }
+
+
+    file.close();
+}
+
+
+// Main
+int main() {
+
     int input = 0;
 
-    while (input != 4)
-    {
-        cout << endl;
-        cout << "====================" << endl;
-        cout << "1. Add a person" << endl;
-        cout << "2. Edit someone" << endl;
-        cout << "3. Get information" << endl;
-        cout << "4. Quit" << endl;
-        cout << "====================" << endl;
 
-        cout << "Enter choice: ";
+    while (input != 5) {
+
+        cout << endl;
+        cout << "Press 1 to add a person:" << endl;
+        cout << "Press 2 to edit someone:" << endl;
+        cout << "Press 3 to get information:" << endl;
+        cout << "Press 4 to remove someone:" << endl;
+        cout << "Press 5 to save and quit:" << endl;
+
+
         cin >> input;
 
-        switch (input)
-        {
+
+        switch (input) {
+
             case 1:
                 AddName();
                 break;
+
 
             case 2:
                 editFile();
                 break;
 
+
             case 3:
                 printInfo();
                 break;
 
+
             case 4:
-                cout << "Goodbye!" << endl;
+                cout << "Remove isn't implemented yet.\n";
                 break;
 
+
+            case 5:
+                cout << "Saving and quitting...\n";
+                break;
+
+
             default:
-                cout << "Invalid choice. Try again." << endl;
+                cout << "Invalid choice.\n";
         }
     }
+
 
     return 0;
 }
